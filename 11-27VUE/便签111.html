@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>便签</title>
+		<script src="js/vue.js" type="text/javascript" charset="utf-8"></script>
+		<style type="text/css">
+			*{
+				margin: 0;
+				padding: 0;
+				list-style: none;
+				box-sizing: border-box;
+			}
+			body,html{
+				width: 100%;
+				height: 100%;
+				overflow: hidden;
+				position: relative;
+			}
+			header{
+				width: 100%;
+				height: 80px;
+				background:rgba(0,0,0,0.8);
+				display: flex;
+				justify-content: space-between;
+
+			}
+			header h1{
+				height: 100%;
+				width: 33.333333%;
+				text-align: center;
+				font-size: 30px;
+				color: white;
+				line-height: 80px;
+			}
+			header .category{
+				width: 33.333333%;
+				height: 100%;
+			}
+			header .category ul{
+				width: 100%;
+				height: 100%;
+				padding: 10px;
+				display: flex;
+				justify-content: space-between;
+				flex-wrap: wrap;
+				align-items: center;
+			}
+			header .category ul li{
+				padding: 5px;
+				margin:2px 5px;
+				color: white;
+				border-radius: 5px;
+				background: #CDCDCD;
+				font-size: 14px;
+				text-align: center;
+				vertical-align: middle;
+			}
+			header .search{
+				width: 33.333333%;
+				height: 100%;
+				padding: 25px 60px;
+			}
+			header .search input{
+				width: 100%;
+				height: 100%;
+				padding: 0 10px;
+			}
+			section{
+				width: 100%;
+				position:absolute;
+				top: 80px;
+				bottom: 0;
+			}
+			section .list{
+				width: 230px;
+				height: 180px;
+				border-radius:5px;
+				position: absolute;
+				display: flex;
+				flex-direction: column;
+			}
+			.list h1{
+				padding: 5px;
+				color: white;
+				font-size: 14px;
+			}
+			.list span{
+				display: block;
+				width: 25px;
+				height: 25px;
+				border-radius: 50%;
+				background: pink;
+				text-align: center;
+				line-height: 25px;
+				float: right;
+			}
+			.list textarea{
+				border: none;
+				outline: none;
+				flex: 1;
+				padding: 5px;
+				resize: none;
+				/*border-radius: 0 0 5px 5px;*/
+			}
+			.direction{
+				width: 100%;
+				height: 30px;
+				display: flex;
+				justify-content: space-between;
+			}
+			.direction button{
+				width: 25%;
+				border: none;
+				outline: none;
+				border-radius: 0 0 5px 5px;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app">
+			<header>
+				<div class="category">
+					<ul>
+						<li v-for="v in car" @click="showtype">{{v.type}}</li>
+					</ul>
+				</div>
+				<h1>便签(<span>{{car.length}}</span>)</h1>
+				<div class="search">
+					<input type="text" placeholder="请输入要查找的内容" v-model="message" @keydown.13="search"/>
+				</div>
+			</header>
+			<section v-on:dblclick.prevent="add">
+				<cars v-for="v in show" :msg="v" :key="v.id" v-on:change="update" v-on:delete="del"></cars>
+			</section>
+		</div>
+		
+		
+
+		
+		<script type="text/javascript">
+			let arr = [
+				{id:1,content:'梅赛德斯奔驰c200l',type:'德国车',color:'#ff318e',x:100,y:90,z:1},
+				{id:2,content:'捷豹XJ',type:'英国车',color:'#ff6700',x:350,y:50,z:1},
+				{id:3,content:'雪佛兰科迈罗',type:'美国车',color:'#FF2728',x:850,y:90,z:1},
+				{id:4,content:'陆地巡洋舰',type:'日本车',color:'#5AC3FF',x:260,y:300,z:1},
+				{id:5,content:'哈弗H9',type:'中国车',color:'#E66B14',x:550,y:380,z:1},
+				{id:6,content:'玛莎拉蒂GHIBLI',type:'意大利车',color:'#6E5F37',x:950,y:400,z:1},
+			]
+			localStorage.data = JSON.stringify(arr);
+			
+			Vue.component('cars',{
+				props:['msg'],
+				data:function(){
+					return{
+						smsg:Object.assign({},this.msg)
+					}
+				},
+				methods:{
+					del(){
+						this.$emit('delete',this.smsg.id)
+					},
+					stop(){
+						return false;
+					},
+					drag(e){
+						let that = this;						
+						let ele = e.target.nodeName === 'H1' ? e.target.parentElement : e.target;
+						let startX = e.clientX;
+						let startY = e.clientY;
+						let left = parseFloat(window.getComputedStyle(ele,null).left);
+						let top = parseFloat(window.getComputedStyle(ele,null).top);
+						//console.log(left)
+						//console.log(startX)
+						ele.addEventListener('mousemove',move);
+						ele.addEventListener('mouseup',end);
+						function move(e){
+							let endX = (e.clientX - startX) + left;
+							let endY = (e.clientY - startY) + top;
+							//console.log(endX)
+							endX = endX <= 0 ? 0 : endX;
+							endX = endX >= window.innerWidth - 230 ? window.innerWidth : endX;
+							endY = endY <= 0 ? 0 : endY;
+							endY = endY >= window.innerWidth - 180 ? window.innerWidth : endY;
+							ele.style.left = endX + 'px';
+							ele.style.top = endY + 'px';
+							that.smsg.x = endX;
+							that.smsg.y = endY;
+						}
+						function end(e){
+							ele.removeEventListener('mousemove',move);
+							ele.removeEventListener('mouseup',end);
+						}
+					}
+				},
+				watch:{
+					'smsg':{
+						handler:function(){
+							this.$emit('change',this.smsg);
+						},
+						deep:true
+					}
+				},
+				template:`
+					<div class="list" :style="{left:smsg.x+'px',top:smsg.y+'px',border:'1px solid'+smsg.color,zIndex:smsg.z}" v-on:mousedown="drag">
+						<h1 :style="{background:smsg.color}">{{smsg.type}}<span @click="del">X</span></h1>
+						<textarea v-model="smsg.content" v-on:mousedown="stop">{{smsg.content}}</textarea>
+						<div class="direction">
+							<button @click="smsg.x-=20">←</button>
+							<button @click="smsg.y-=20">↑</button>
+							<button @click="smsg.y+=20">↓</button>
+							<button @click="smsg.x+=20">→</button>
+						</div>
+					</div>
+				`
+			})
+			
+			
+			
+			let app = new Vue({
+				el:'#app',
+				data:{
+					car:[],
+					type:['美国车','日本车','中国车','英国车','德国车','意大利车'],
+					show:[],
+					message:'',
+				},
+				methods:{
+					update(v){
+						let index = 0;
+						this.car.forEach((ele,i)=>{
+							if(ele.id == v.id){
+								index = i; 
+							}
+						})
+						this.car.splice(index,1,v);
+						this.show.splice(index,1,v);
+						
+						//修改index
+						this.car.forEach((ele,i)=>{
+							ele.z = 1;
+						})
+						console.log(this.car[index].z += 1);
+						
+					},
+					del(ids){
+						this.car = this.car.filter(ele=>ele.id != ids)
+						this.show = this.show.filter(ele=>ele.id != ids)
+					},
+					add(e){
+						let last = this.car[this.car.length-1].id+1;
+						let type = this.type[Math.floor(Math.random()*this.type.length)];
+						let color = `rgb(${Math.floor(Math.random()*256)},${Math.floor(Math.random()*256)},${Math.floor(Math.random()*256)})`;
+						let x = e.clientX;
+						let y = e.clientY-80;
+						
+						let obj = {id:last,content:'',type,color,x,y};
+						//this.car.push(obj);
+						this.show.push(obj);
+					},
+					showtype(e){
+						//console.log(e.target.innerHTML)
+						let q = this.car.filter(ele=>ele.type == e.target.innerHTML);
+						this.show = q;
+						console.log(q[0])
+					},
+					search(e){
+						//console.log(e.target.value)
+						/*let s = this.car.filter(ele=>ele.content == e.target.value || 
+							ele.type == e.target.value || ele.id == e.target.value);
+						this.show = s;*/
+						
+						
+						let value = e.target.value.trim();
+						let s = this.car.filter(ele=>ele.content.includes(value)|| 
+							ele.type.includes(value) || ele.id == value);
+						
+						this.show = s;
+						//console.log(value)
+						//console.log(s[0]);
+					},
+				},
+				watch:{
+					'car':{
+						handler:function(){
+							localStorage.data = JSON.stringify(this.car);
+						},
+						deep:true
+					}
+				},
+				mounted(){
+					this.car = JSON.parse(localStorage.data);
+					this.show = this.car;
+				}
+			})
+			
+		</script>
+	</body>
+</html>
